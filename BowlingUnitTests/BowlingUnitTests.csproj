@@ -52,14 +52,15 @@
   <ItemGroup>
     <Compile Include="FrameTests.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="BowlingGameTests.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="packages.config" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\BowlingScoreKata\BowlingScoreKata.csproj">
-      <Project>{560711e8-bab0-4d4b-adcc-4ab62e681578}</Project>
-      <Name>BowlingScoreKata</Name>
+    <ProjectReference Include="..\BowlingKataCore\BowlingKataCore.csproj">
+      <Project>{a2347392-4829-42c5-97c8-c9887cf7a786}</Project>
+      <Name>BowlingKataCore</Name>
     </ProjectReference>
   </ItemGroup>
   <Choose>

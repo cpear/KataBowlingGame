@@ -1,5 +1,5 @@
 ﻿using System;
-using BowlingScoreKata;
+using BowlingKataCore;
 using NUnit.Framework;
 
 namespace BowlingUnitTests
