@@ -4,13 +4,15 @@ namespace BowlingKataCore
 {
     public enum BowlingMessage
     {
-        Fail, Success, TenthFrameCompleteScoreNotSaved
+        Fail, Success, TenthFrameComplete
     }
 
     public class BowlingGame
     {
         private readonly Frame[] _frames;
-        private int _currentFrame;
+        private int _currentFrameCounter;
+
+        private Frame CurrentFrame => _frames[_currentFrameCounter];
 
         public BowlingGame()
         {
@@ -26,45 +28,53 @@ namespace BowlingKataCore
                 new Frame(),
                 new Frame(),
                 new Frame(),
-                new Frame()
+                new Frame(true)
             };
 
-            _currentFrame = 0;
+            _currentFrameCounter = 0;
         }
 
         private void HandleFirstRollOfFrame()
         {
-            var thisFrame = _frames[_currentFrame];
+            if (CurrentFrame.IsTenthFrame) return;
 
-            if (thisFrame.IsTenthFrame) return;
+            if (CurrentFrame.Rolls[0] != 10) return;
 
-            if (thisFrame.Rolls[0] != 10) return;
-
-            _currentFrame++;
+            _currentFrameCounter++;
         }
 
         private void HandleSecondRollOfFrame()
         {
-            var thisFrame = _frames[_currentFrame];
+            if (CurrentFrame.IsTenthFrame) return;
 
-            if (thisFrame.IsTenthFrame) return;
-
-            _currentFrame++;
+            _currentFrameCounter++;
         }
 
-        private int ShavePoints()
+        /// <summary>
+        /// Shave the points on a second roll if (roll1 + roll2) is greatre than 10 
+        /// </summary>
+        /// <param name="points">Points scored on a second roll</param>
+        /// <returns>A valid value for the second roll</returns>
+        private int ShavePoints(int points)
         {
-            //Shavepoints off of second roll. You can only reach a cap of 10
-            return 0;
+            if (CurrentFrame.IsTenthFrame) return points;
+
+            if (CurrentFrame.Rolls[0].Value == 0) return points;
+
+            if (CurrentFrame.Rolls[0].Value + points <= 10) return points;
+
+            return Math.Abs(CurrentFrame.Rolls[0].Value - 10);
+
         }
 
-        private BowlingMessage ScorePoints(int pointsToScore)
+        public BowlingMessage ScorePoints(int pointsToScore)
         {
             if (pointsToScore > 10) { throw new ArgumentOutOfRangeException(nameof(pointsToScore), "The score must be less than 11"); }
             if (pointsToScore < 0) { throw new ArgumentOutOfRangeException(nameof(pointsToScore), "The score must be more than -1"); }
 
-            var thisFrame = _frames[_currentFrame];
+            var thisFrame = _frames[_currentFrameCounter];
 
+            //First Roll
             if (thisFrame.Rolls[0] == null)
             {
                 thisFrame.Rolls[0] = pointsToScore;
@@ -73,23 +83,24 @@ namespace BowlingKataCore
                 return BowlingMessage.Success;
             }
 
+            //Second Roll
             if (thisFrame.Rolls[0] < 10 && thisFrame.Rolls[1] == null)
             {
-                thisFrame.Rolls[1] = pointsToScore;
+                thisFrame.Rolls[1] = ShavePoints(pointsToScore);
 
                 HandleSecondRollOfFrame();
                 return BowlingMessage.Success;
             }
 
+            //3rd Roll - Tenth Frame Only
             if (thisFrame.IsTenthFrame && thisFrame.Rolls[2] == null)
             {
                 thisFrame.Rolls[2] = pointsToScore;
 
-                _currentFrame++;
                 return BowlingMessage.Success;
             }
 
-            return BowlingMessage.Fail;
+            return BowlingMessage.TenthFrameComplete;
         }
 
         public int?[] GetRollsForFrame(int frame)
@@ -97,6 +108,10 @@ namespace BowlingKataCore
             return _frames[frame - 1].Rolls;
         }
 
+        /// <summary>
+        /// Generates a random score for a single roll and saves it.
+        /// </summary>
+        /// <returns></returns>
         public BowlingMessage Roll()
         {
             Random rnd = new Random();
