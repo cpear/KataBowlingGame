@@ -1,4 +1,6 @@
 ﻿using System;
+using System.Linq;
+using System.Threading;
 
 namespace BowlingKataCore
 {
@@ -67,6 +69,37 @@ namespace BowlingKataCore
 
         }
 
+        private BowlingMessage Score10thFramePoints(Frame thisFrame, int pointsToScore)
+        {
+            //First Roll 
+            if (thisFrame.Rolls[0] == null)
+            {
+                thisFrame.Rolls[0] = pointsToScore;
+
+                return BowlingMessage.Success;
+            }
+
+            //2nd Roll
+            if (thisFrame.Rolls[1] == null)
+            {
+                thisFrame.Rolls[1] = pointsToScore;
+
+                return BowlingMessage.Success;
+            }
+
+            //3rd Roll
+            if (thisFrame.Rolls[2] == null && thisFrame.Rolls[0] + thisFrame.Rolls[1] >= 10)
+            {
+                thisFrame.Rolls[2] = pointsToScore;
+
+                return BowlingMessage.Success;
+            }
+
+            thisFrame.Rolls[2] = 0;
+
+            return BowlingMessage.TenthFrameComplete;
+        }
+
         public BowlingMessage ScorePoints(int pointsToScore)
         {
             if (pointsToScore > 10) { throw new ArgumentOutOfRangeException(nameof(pointsToScore), "The score must be less than 11"); }
@@ -74,7 +107,10 @@ namespace BowlingKataCore
 
             var thisFrame = _frames[_currentFrameCounter];
 
-            //First Roll
+            //Handle 10th frame
+            if (thisFrame.IsTenthFrame) return Score10thFramePoints(thisFrame, pointsToScore);
+
+            //First Roll Normal Frame
             if (thisFrame.Rolls[0] == null)
             {
                 thisFrame.Rolls[0] = pointsToScore;
@@ -83,7 +119,7 @@ namespace BowlingKataCore
                 return BowlingMessage.Success;
             }
 
-            //Second Roll
+            //Second Roll Normal Frame
             if (thisFrame.Rolls[0] < 10 && thisFrame.Rolls[1] == null)
             {
                 thisFrame.Rolls[1] = ShavePoints(pointsToScore);
@@ -92,15 +128,7 @@ namespace BowlingKataCore
                 return BowlingMessage.Success;
             }
 
-            //3rd Roll - Tenth Frame Only
-            if (thisFrame.IsTenthFrame && thisFrame.Rolls[2] == null)
-            {
-                thisFrame.Rolls[2] = pointsToScore;
-
-                return BowlingMessage.Success;
-            }
-
-            return BowlingMessage.TenthFrameComplete;
+            return BowlingMessage.Fail;
         }
 
         public int?[] GetRollsForFrame(int frame)
@@ -115,6 +143,7 @@ namespace BowlingKataCore
         public BowlingMessage Roll()
         {
             Random rnd = new Random();
+            Thread.Sleep(13);
             int points = rnd.Next(0, 11);
 
             return ScorePoints(points);
@@ -122,7 +151,46 @@ namespace BowlingKataCore
 
         public int FinalScore()
         {
-            return 0;
+            int total = 0;
+
+            for (int i = 0; i <= 8; i++)
+            {
+                var firstRoll = _frames[i].Rolls[0].Value;
+                var secondRoll = _frames[i].Rolls[1] == null ? 0 : _frames[i].Rolls[1].Value;
+
+
+                if (firstRoll == 10)
+                {
+                    //We got a strike
+                    total = total + 10 + GetFirstRollAftercurrentRoll(i) + GetSecondRollAfterCurrentRoll(i);
+                }
+                else if (firstRoll + secondRoll == 10)
+                {
+                    //We got a spare
+                    var nextFrameRolls = _frames[i + 1].Rolls;
+                    total = total + 10 + nextFrameRolls[0].Value;
+                }
+                else
+                {
+                    total = total + firstRoll + secondRoll;
+                }
+
+            }
+
+            return total + _frames[9].Rolls.Sum(i => i.GetValueOrDefault(0));
         }
+
+        private int GetFirstRollAftercurrentRoll(int currentFrame )
+        {
+            return  _frames[currentFrame + 1].Rolls[0].Value;
+        }
+
+        private int GetSecondRollAfterCurrentRoll(int currentFrame)
+        {
+            var nextFrame = _frames[currentFrame + 1];
+
+            return nextFrame.Rolls[1] ?? _frames[currentFrame + 2].Rolls[0].Value;
+        }
+
     }
 }

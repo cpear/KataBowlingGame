@@ -1,9 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Cryptography.X509Certificates;
-using System.Text;
-using System.Threading.Tasks;
 using BowlingKataCore;
 using NUnit.Framework;
 
@@ -98,5 +93,153 @@ namespace BowlingUnitTests
             
         }
 
+        [Test]
+        public void ScoreCantBeLessThan0()
+        {
+            var bg = new BowlingGame();
+
+            Assert.Throws<ArgumentOutOfRangeException>((() => bg.ScorePoints(-1)));
+        }
+
+        [Test]
+        public void ScoreCantBeMoreThan10()
+        {
+            var bg = new BowlingGame();
+
+            Assert.Throws<ArgumentOutOfRangeException>((() => bg.ScorePoints(11)));
+        }
+
+        [Test]
+        public void CheckFinalScoreAllStrikes()
+        {
+            var bg = new BowlingGame();
+
+            bg.ScorePoints(10); bg.ScorePoints(10); bg.ScorePoints(10);
+            bg.ScorePoints(10); bg.ScorePoints(10); bg.ScorePoints(10);
+            bg.ScorePoints(10); bg.ScorePoints(10); bg.ScorePoints(10);
+            bg.ScorePoints(10); bg.ScorePoints(10); bg.ScorePoints(10);
+
+            var finalScore = bg.FinalScore();
+
+            Assert.AreEqual(300, finalScore);
+        }
+
+        [Test]
+        public void CheckFinalScoreLowestPossible()
+        {
+            var bg = new BowlingGame();
+
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+
+            var finalScore = bg.FinalScore();
+
+            Assert.AreEqual(0, finalScore);
+        }
+
+
+        [Test]
+        public void CheckFrame10OnlyCounts2Rolls()
+        {
+            var bg = new BowlingGame();
+
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(1); bg.ScorePoints(1);
+
+            //Third roll in 10th frame should not be included in score
+            bg.ScorePoints(1);
+
+            var finalScore = bg.FinalScore();
+
+            Assert.AreEqual(2, finalScore);
+        }
+
+        [Test]
+        public void CheckFrame10SpareGetsThirdRoll()
+        {
+            var bg = new BowlingGame();
+
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(1); bg.ScorePoints(9);
+
+            //Third roll in 10th frame should not be included in score
+            bg.ScorePoints(4);
+
+            var finalScore = bg.FinalScore();
+
+            Assert.AreEqual(14, finalScore);
+        }
+
+        [Test]
+        public void CheckFrame10StrikeGetsThirdRoll()
+        {
+            var bg = new BowlingGame();
+
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(10); bg.ScorePoints(0);
+
+            //Third roll in 10th frame should not be included in score
+            bg.ScorePoints(8);
+
+            var finalScore = bg.FinalScore();
+
+            Assert.AreEqual(18, finalScore);
+        }
+
+        [Test]
+        public void CheckFrame10DoubleStrikeGetsThirdRoll()
+        {
+            var bg = new BowlingGame();
+
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(0); bg.ScorePoints(0);
+            bg.ScorePoints(10); bg.ScorePoints(10);
+
+            //Third roll in 10th frame should not be included in score
+            bg.ScorePoints(1);
+
+            var finalScore = bg.FinalScore();
+
+            Assert.AreEqual(21, finalScore);
+        }
     }
 }
